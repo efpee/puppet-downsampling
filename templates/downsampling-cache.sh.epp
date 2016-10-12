@@ -1,0 +1,90 @@
+#!/bin/sh
+#
+# /etc/init.d/downsampling-cache
+# This script start the hazelcast in-memory cache
+# Author: Frank Premereur
+#
+# chkconfig: 2345 95 05
+
+# Source function library
+. /etc/init.d/functions
+
+export JAVA_HOME=<%= $emsa_downsampling::java_home %>
+SERVICE_PID=`ps aux | grep hazelcast-<%= $emsa_downsampling::hzl_version %>/bin/downsampling_server | grep -v grep | awk '{print $2}'`
+SERVICE_PID_HAZEL=`ps aux | grep 'java -server -Dhazelcast' | grep -v grep | awk '{print $2}'`
+
+start() {
+	if [ -z "$SERVICE_PID_HAZEL" ] 
+	then
+		echo -n "Starting <Hazelcast>: "
+		cd <%= $emsa_downsampling::hzl_home %>
+		nohup bin/downsampling-server.sh &
+		#touch /var/lock/subsys/jcache
+		echo "done"
+	else
+		echo "Hazelcast is already running"
+	fi
+}	
+
+stop() {
+	if [ -z "$SERVICE_PID" ]
+	then
+		echo -n "Shutting down <Hazelcast - pid $SERVICE_PID> service"
+		kill -9 $SERVICE_PID
+	else
+		echo -n "Hazelcast service not running"
+	fi
+	if [ -z "$SERVICE_ID_HAZEL" ]
+	then 
+		echo -n "Shutting down <Hazelcast - pid $SERVICE_PID_HAZEL> server"
+		kill -9 $SERVICE_PID_HAZEL
+	else
+		echo -n "Hazelcast server not running"
+	fi
+	#rm -f /var/lock/subsys/jcache
+}
+
+status() {
+	if [ -z "$SERVICE_PID" ] 
+	then
+		echo "Hazelcast service is not running"
+	else
+		echo "Hazelcast service (pid $SERVICE_PID) is running"
+	fi
+	if [ -z "$SERVICE_PID_HAZEL" ] 
+	then
+		echo "Hazelcast server is not running"
+	else
+		echo "Hazelcast server (pid $SERVICE_PID_HAZEL) is running"
+	fi
+}
+
+case "$1" in
+    start)
+	start
+	;;
+    stop)
+	stop
+	;;
+    status)
+	status
+	;;
+    restart)
+    	stop
+	sleep 3
+	start
+	;;
+    reload)
+	restart
+	;;
+    condrestart)
+	[ -f /var/lock/subsys/jcache ] && restart || :
+	;;
+    *)
+	echo $"Usage: $0 {start|stop|status|reload|restart}"
+	exit 1
+	;;
+esac
+
+exit $?
+
