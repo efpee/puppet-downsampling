@@ -36,50 +36,50 @@
 # Copyright 2016 Your name here, unless otherwise noted.
 #
 class emsa_downsampling (
-	$version				= '1.1.2',
-	$previous_version		= '1.1.2',
-	$root_dir				= '/downsampling',
+	$version				  = '1.1.2',
+	$previous_version	= '1.1.2',
+	$root_dir				  = '/downsampling',
 	$java_home				= '/usr/bin/java',
 	$hzl_version			= '3.4.2',
 	$hzl_cluster			= 'star',
-	$hzl_pass				= '',
+	$hzl_pass				  = '',
 	$hzl_man_center_enabled	= 'false',
 	$hzl_man_center_uri		= 'http://localhost:8080/mancenter',
-	$hzl_multicast_enabled	= 'false',
-	$hzl_multicast_group	= '224.2.2.3',
+	$hzl_multicast_enabled = 'false',
+	$hzl_multicast_group  = '224.2.2.3',
 	$hzl_multicast_port		= '54327',
-	$hzl_tcp_enabled		= 'true',
+	$hzl_tcp_enabled		  = 'true',
 	$hzl_tcp_server_ips		= [],
-	$hzl_aws_enabled		= 'false',
+	$hzl_aws_enabled		  = 'false',
 	$hzl_aws_access_key		= 'my_aws_key',
 	$hzl_aws_secret_key		= 'a dark secret',
 	$hzl_aws_host_header	= 'ec2.amazonaws.com',
-	$hzl_aws_region			= 'us-east-1',
+	$hzl_aws_region			  = 'us-east-1',
 	$commons_lang_version	= '3.3.2',
-	$jcache_version			= '1.0.0',
-	$wls_user				= '',
-	$wls_pass				= '',
-	$wls_admin_url			= '',
-	$wls_domain_dir			= '/wl_domains/imdate/',
+	$jcache_version			  = '1.0.0',
+	$wls_user				      = '',
+	$wls_pass				      = '',
+	$wls_admin_url			  = '',
+	$wls_domain_dir			  = '/wl_domains/imdate/',
 	$wls_application_cluster	= 'ImdAppSrvCluster',
 	$wls_application_servers	= '[\'IMDAppSrv1\',\'IMDAppSrv2\']',
-	$wls_jms_cluster		= 'ImdJmsSrvCluster',
- 	$wls_jms_servers		= '[\'IMDJmsSrv1\',\'IMDJmsSrv2\']',
+	$wls_jms_cluster		  = 'ImdJmsSrvCluster',
+ 	$wls_jms_servers		  = '[\'IMDJmsSrv1\',\'IMDJmsSrv2\']',
 ) {
 
-	$artifact_dir			= "$root_dir/artifacts"
-	$script_dir				= "$root_dir/scripts"
-	$wls_dir				= "$root_dir/wls"
-	$hzl_home				= "$root_dir/hazelcast-$hzl_version"
+	$artifact_dir   = "$root_dir/artifacts"
+	$script_dir     = "$root_dir/scripts"
+	$wls_dir        = "$root_dir/wls"
+	$hzl_home       = "$root_dir/hazelcast-$hzl_version"
 
-	$commons_lang_uri		= "http://buildenv:8085/repository/internal/org/apache/commons/commons-lang3/$commons_lang_version/commons-lang3-$commons_lang_version.jar"
-	$jcache_uri				= "http://central.maven.org/maven2/javax/cache/cache-api/$jcache_version/cache-api-$jcache_version.jar"
+	$commons_lang_uri	= "http://buildenv:8085/repository/internal/org/apache/commons/commons-lang3/$commons_lang_version/commons-lang3-$commons_lang_version.jar"
+	$jcache_uri     = "http://central.maven.org/maven2/javax/cache/cache-api/$jcache_version/cache-api-$jcache_version.jar"
 
-	$pkg					= "position-downsampling-ear-$version.ear"
-	$pkg_old				= "position-downsampling-ear-$previous_version.ear"
+	$pkg            = "position-downsampling-ear-$version.ear"
+	$pkg_old        = "position-downsampling-ear-$previous_version.ear"
 
-	$app_name 				= "postion_downsampling-$version"
-	$app_old_name 			= "postion_downsampling-$previous_version"
+	$app_name       = "postion_downsampling-$version"
+	$app_old_name   = "postion_downsampling-$previous_version"
 
 
 	
@@ -92,9 +92,7 @@ class emsa_downsampling (
 		['/bin/', '/sbin/', '/usr/bin/', '/usr/sbin/']
 	}
 
-  package {'git':
-    ensure              => 'installed',
-  }
+  ensure_packages(['git'])
 
   ensure_resource('group', 'oinstall', {ensure => 'present',})
 
