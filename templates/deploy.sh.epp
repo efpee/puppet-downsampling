@@ -1,2 +1,3 @@
 . <%= $emsa_downsampling::wls_domain_dir%>/bin/setDomainEnv.sh
+cd <%= $emsa_downsampling::script_dir%>/wlst
 <%= $emsa_downsampling::java_home%> weblogic.WLST <%= $emsa_downsampling::script_dir%>/wlst/create_resources.py

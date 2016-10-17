@@ -24,7 +24,7 @@ for ms in JMS_MANAGED_SERVERS:
   i += 1
   
 # Create a JMS Module
-jmsResource = createJMSModule(JMS_MODULE, JMS_SUBDEPLOYMENT, JMS_CLUSTER, jmsServers).getJMSResource()
+jmsResource = createJMSModule(JMS_MODULE, JMS_SUBDEPLOYMENT, '/Clusters/' + JMS_CLUSTER, jmsServers).getJMSResource()
 
 # Create a connection factory and all distributed queues
 for cFactory in LOCAL_CONNECTION_FACTORIES:

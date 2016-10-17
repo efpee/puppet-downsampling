@@ -5,7 +5,6 @@ print 'Stopping and undeploying ' + oldApplication
 stopApplication(oldApplication)
 undeploy(oldApplication)
 
-app_targets= ','.join(JMS_MANAGED_SERVERS)
-print 'Deploying and starting ' + newApplication + ' to ' + app_targets
-deploy(appName=newApplication, path='<%= $emsa_downsampling::wls_dir %>/app/<%= $emsa_downsampling::pkg %>', targets=app_targets, planPath='<%= $emsa_downsampling::wls_dir %>/plan/Plan.xml')
+print 'Deploying and starting ' + newApplication + ' to ' + JMS_CLUSTER
+deploy(appName=newApplication, path='<%= $emsa_downsampling::wls_dir %>/app/<%= $emsa_downsampling::pkg %>', targets=JMS_CLUSTER, planPath='<%= $emsa_downsampling::wls_dir %>/plan/Plan.xml')
 startApplication(newApplication)

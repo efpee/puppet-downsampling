@@ -104,12 +104,18 @@ class emsa_downsampling (
                 'require'         => Group['oinstall'],
   })}
 
+  File {
+    ensure              => 'present',
+    owner               => 'oracle',
+    group               => 'imdate',
+    mode                => '0644',
+    backup              => true,
+  }
+
 	file {"$hzl_home/bin/downsampling-server.sh":
 		ensure	=> file,
 		content	=> epp('emsa_downsampling/downsampling-server.sh.epp'),
 		mode	=> '0755',
-		group	=> 'oinstall',
-		owner	=> 'oracle',
 		require	=> User['oracle'],
 	}
 
@@ -117,16 +123,12 @@ class emsa_downsampling (
 		ensure	=> file,
 		content	=> epp('emsa_downsampling/downsampling-cache.sh.epp'),
 		mode	=> '0755',
-		group	=> 'oinstall',
-		owner	=> 'oracle',
 		require	=> User['oracle'],
 	}
 	
 	file {"$hzl_home/bin/downsampling-config.xml":
 		ensure	=> file,
 		content	=> epp('emsa_downsampling/downsampling-config.xml.epp'),
-		group	=> 'oinstall',
-		owner	=> 'oracle',
 		require	=> User['oracle'],
 	}
 
