@@ -61,10 +61,10 @@ class emsa_downsampling (
 	$wls_pass				      = '',
 	$wls_admin_url			  = '',
 	$wls_domain_dir			  = '/wl_domains/imdate/',
-	$wls_application_cluster	= 'ImdAppSrvCluster',
-	$wls_application_servers	= '[\'IMDAppSrv1\',\'IMDAppSrv2\']',
-	$wls_jms_cluster		  = 'ImdJmsSrvCluster',
- 	$wls_jms_servers		  = '[\'IMDJmsSrv1\',\'IMDJmsSrv2\']',
+  $wls_app_cluster      = 'imdateAppCluster',
+  $wls_app_servers      = ['imdateAppSrv1', 'imdateAppSrv2'],
+  $wls_jms_cluster      = 'imdateJmsCluster',
+  $wls_jms_servers      = ['imdateJmsSrv1', 'imdateJmsSrv2', 'imdateJmsSrv3', 'imdateJmsSrv4'],
 ) {
 
 	$artifact_dir   = "$root_dir/artifacts"

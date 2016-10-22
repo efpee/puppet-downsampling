@@ -1,4 +1,4 @@
-print 'Creating local JMS resources ....'
+print ' - Creating local JMS resources ....'
 
 QUEUE_TIME_TO_LIVE = 15L * 60L * 1000L
 QUEUE_FORWARD_DELAY = 10  # time in seconds before a message on a uniform distributed queue with no listeners will be forwarded to another server that does have listeners
@@ -35,21 +35,4 @@ for queue in LOCAL_QUEUES:
 
 for queue in ERROR_FORWARDED_QUEUES:
   createUniformDistributedQueue(jmsResource, queue[0], queue[1], JMS_SUBDEPLOYMENT, QUEUE_TIME_TO_LIVE, QUEUE_FORWARD_DELAY, errorQueueName='DownSamplingErrorQueue', redeliveries=1, redeliveryDelay=1000)
-
-
-# Foreign servers kept out as too many possible configurations
-#  ... and might not even be needed
-               
-#FOREIGN_SERVER = 'IMDatEForeignServer'
-#FOREIGN_SERVER_URL = 't3://qwls55:7036,qwls56:7036'
-#FOREIGN_CONNECTION_FACTORIES = (('IMDatEConnectionFactory', 'jms.star.DownSampling.IMDatEConnectionFactory', 'imdate.ConnectionFactory'),)
-#FOREIGN_DESTINATIONS =         (('IMDatEOutputQueue', 'jms.star.DownSampling.imdate.OutputQueue', 'imdate.l0.queue'),)
-    
-# Create a foreign JMS server
-#foreignServer = createForeignJMSServer(FOREIGN_SERVER, JMS_MODULE, JMS_SUBDEPLOYMENT, FOREIGN_SERVER_URL, username, pass)
-#for factory in FOREIGN_CONNECTION_FACTORIES:
-#  createForeignConnectionFactory(foreignServer, factory[0], factory[1], factory[2])
-
-#for dest in FOREIGN_DESTINATIONS:
-#  createForeignDestination(foreignServer, dest[0], dest[1], dest[2])
 
