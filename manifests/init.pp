@@ -94,16 +94,16 @@ class emsa_downsampling (
 
   ensure_packages(['git'])
 
-  ensure_resource('group', 'oinstall', {ensure => 'present',})
-
-  if !defined(User['oracle']) {
-    ensure_resource('user', 'oracle', {
-                'ensure'          => present,
-                'managehome'      => true,
-                'groups'          => 'oinstall',
-                'require'         => Group['oinstall'],
-  })}
-
+  ensure_resource('group', 'oinstall', {ensure => 'present', gid => 115,})
+ 
+  ensure_resource('user', 'oracle', {
+    'ensure'          => present,
+    'managehome'      => true,
+    'groups'          => 'oinstall',
+    'require'         => Group['oinstall'],
+    'gid'             => 115,
+  })
+      
   File {
     ensure              => 'present',
     owner               => 'oracle',
@@ -237,10 +237,12 @@ class emsa_downsampling (
 
 	exec {'change-ownership':
 		command	=>	"chown -R oracle:oinstall $wls_dir",
-	} ->
+	} 
 
-	exec {'deploy-in-wls':
-		command	=>	"$script_dir/deploy.sh",
-	}
+  # No automatic deploy as module will be installed on multiple servers but 
+  # installation is needed only once
+	#exec {'deploy-in-wls':
+	#	command	=>	"$script_dir/deploy.sh",
+	#}
 
 }
