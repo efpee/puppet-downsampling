@@ -7,4 +7,4 @@ undeploy(oldApplication)
 
 print 'Deploying and starting ' + newApplication + ' to ' + JMS_CLUSTER
 deploy(appName=newApplication, path='<%= $emsa_downsampling::wls_dir %>/app/<%= $emsa_downsampling::pkg %>', targets=JMS_CLUSTER, planPath='<%= $emsa_downsampling::wls_dir %>/plan/Plan.xml')
-startApplication(newApplication)
+#startApplication(newApplication)

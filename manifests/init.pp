@@ -72,7 +72,7 @@ class emsa_downsampling (
 	$wls_dir        = "$root_dir/wls"
 	$hzl_home       = "$root_dir/hazelcast-$hzl_version"
 
-	$commons_lang_uri	= "http://buildenv:8085/repository/internal/org/apache/commons/commons-lang3/$commons_lang_version/commons-lang3-$commons_lang_version.jar"
+	$commons_lang_uri	= "http://central.maven.org/maven2/org/apache/commons/commons-lang3/$commons_lang_version/commons-lang3-$commons_lang_version.jar"
 	$jcache_uri     = "http://central.maven.org/maven2/javax/cache/cache-api/$jcache_version/cache-api-$jcache_version.jar"
 
 	$pkg            = "position-downsampling-ear-$version.ear"
@@ -92,8 +92,6 @@ class emsa_downsampling (
 		['/bin/', '/sbin/', '/usr/bin/', '/usr/sbin/']
 	}
 
-  ensure_packages(['git'])
-
   ensure_resource('group', 'oinstall', {ensure => 'present', gid => 115,})
  
   ensure_resource('user', 'oracle', {
@@ -110,6 +108,10 @@ class emsa_downsampling (
     group               => 'imdate',
     mode                => '0644',
     backup              => true,
+  }
+
+  file {"$hzl_home/bin":
+		ensure	=> directory,
   }
 
 	file {"$hzl_home/bin/downsampling-server.sh":
