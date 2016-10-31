@@ -178,7 +178,7 @@ class emsa_downsampling (
 	} ->
 
   exec {'ds_fetch_jms_functions':
-    command	=> "wget https://raw.githubusercontent.com/efpee/wlst/1.0.1/jms_functions.py -O $script_dir/wlst/jms_functions.py",
+    command	=> "wget https://raw.githubusercontent.com/efpee/wlst/1.0.2/jms_functions.py -O $script_dir/wlst/jms_functions.py",
 		unless	=> "test -f $script_dir/wlst/jms_functions.py",
 		require	=> Package['wget'],
   } ->
