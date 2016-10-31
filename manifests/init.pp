@@ -65,6 +65,8 @@ class emsa_downsampling (
   $wls_app_servers      = ['imdateAppSrv1', 'imdateAppSrv2'],
   $wls_jms_cluster      = 'imdateJmsCluster',
   $wls_jms_servers      = ['imdateJmsSrv1', 'imdateJmsSrv2', 'imdateJmsSrv3', 'imdateJmsSrv4'],
+  $oinstall_gid         = 115,
+  $oracle_gid           = 115,
 ) {
 
 	$artifact_dir   = "$root_dir/artifacts"
@@ -92,14 +94,18 @@ class emsa_downsampling (
 		['/bin/', '/sbin/', '/usr/bin/', '/usr/sbin/']
 	}
 
-  ensure_resource('group', 'oinstall', {ensure => 'present', gid => 115,})
+  ensure_resource('group', 'oinstall', {
+      ensure => 'present', 
+      gid    => "$oracle_gid",
+    }
+  )
  
   ensure_resource('user', 'oracle', {
     'ensure'          => present,
     'managehome'      => true,
     'groups'          => 'oinstall',
     'require'         => Group['oinstall'],
-    'gid'             => 115,
+    'gid'             => "$oinstall_gid",
   })
       
   File {
