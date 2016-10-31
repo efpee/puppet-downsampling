@@ -94,6 +94,12 @@ class emsa_downsampling (
 		['/bin/', '/sbin/', '/usr/bin/', '/usr/sbin/']
 	}
 
+  case $operatingsystem {
+    'RedHat', 'CentOS': {$packages = ['wget']}
+    default:            {$packages = ['wget']}
+  }
+  ensure_packages($packages)
+
   ensure_resource('group', 'oinstall', {
       ensure => 'present', 
       gid    => "$oracle_gid",
@@ -171,13 +177,12 @@ class emsa_downsampling (
 		mode    => '0700',
 	} ->
 
-	file {"$script_dir/wlst/jms_functions.py":
-		# this could be reused in the other projects
-		ensure	=> file,
-		content	=> epp('emsa_downsampling/jms_functions.py.epp'),
-		mode    => '0755',
-	} -> 
-
+  exec {'ds_fetch_jms_functions':
+    command	=> "wget https://raw.githubusercontent.com/efpee/wlst/1.0.1/jms_functions.py -O $script_dir/wlst/jms_functions.py",
+		unless	=> "test -f $script_dir/wlst/jms_functions.py",
+		require	=> Package['wget'],
+  } ->
+  
 	file {"$script_dir/wlst/create_jms_resources.py":
 		ensure	=> file,
 		content	=> epp('emsa_downsampling/create_jms_resources.py.epp'),

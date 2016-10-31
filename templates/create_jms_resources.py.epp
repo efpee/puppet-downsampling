@@ -34,5 +34,6 @@ for queue in LOCAL_QUEUES:
   createUniformDistributedQueue(jmsResource, queue[0], queue[1], JMS_SUBDEPLOYMENT, QUEUE_TIME_TO_LIVE, QUEUE_FORWARD_DELAY)
 
 for queue in ERROR_FORWARDED_QUEUES:
-  createUniformDistributedQueue(jmsResource, queue[0], queue[1], JMS_SUBDEPLOYMENT, QUEUE_TIME_TO_LIVE, QUEUE_FORWARD_DELAY, errorQueueName='DownSamplingErrorQueue', redeliveries=1, redeliveryDelay=1000)
+  createUniformDistributedQueue(jmsResource, queue[0], queue[1], JMS_SUBDEPLOYMENT, QUEUE_TIME_TO_LIVE, QUEUE_FORWARD_DELAY)
+  configUniformDistributedQueueErrorHandling(queue[0], 'DownSamplingErrorQueue', redeliveries=1, redeliveryDelay=1000)
 
