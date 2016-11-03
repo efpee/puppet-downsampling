@@ -10,10 +10,16 @@
       <name>MessageDrivenDescriptor_resourceAdapterJNDIName_14743798996331</name>
     </variable>
     <variable>
-      <name>MessageDrivenDescriptor_destinationJNDIName_14743798996342</name>
+      <name>MDB_destination_type</name>
+      <value><%= $emsa_downsampling::input_destination_type %></value>
     </variable>
     <variable>
-      <name>MessageDrivenDescriptor_connectionFactoryJNDIName_14743798996343</name>
+      <name>MDB_destination_JNDI</name>
+      <value><%= $emsa_downsampling::input_destination_jndi %></value>
+    </variable>
+    <variable>
+      <name>MDB_connection_factory_JNDI</name>
+      <value><%= $emsa_downsampling::input_connection_factory_jndi %></value>
     </variable>
     <variable>
       <name>WorkManager_MDB_workmanager_MaxThreadsConstraintName_14743799504114</name>
@@ -76,7 +82,7 @@
         <xpath>/weblogic-ejb-jar/weblogic-enterprise-bean/[ejb-name="PositionMDB"]/message-driven-descriptor/resource-adapter-jndi-name</xpath>
       </variable-assignment>
       <variable-assignment>
-        <name>MessageDrivenDescriptor_destinationJNDIName_14743798996342</name>
+        <name>MDB_destination_JNDIName</name>
         <xpath>/weblogic-ejb-jar/weblogic-enterprise-bean/[ejb-name="PositionMDB"]/message-driven-descriptor/destination-jndi-name</xpath>
       </variable-assignment>
       <variable-assignment>
@@ -87,6 +93,21 @@
     <module-descriptor external="false">
       <root-element>ejb-jar</root-element>
       <uri>META-INF/ejb-jar.xml</uri>
+      <variable-assignment>
+        <name>MDB_destination_type</name>
+        <xpath>/ejb-jar/enterprise-beans/message-driven[ejb-name="PositionDownsampling-mdb"]/activation-config/activation-config-property[activation-config-property-name="destinationType"]/activation-config-property-value</xpath>
+        <operation>replace</operation>
+      </variable-assignment>
+      <variable-assignment>
+        <name>MDB_destination_JNDI</name>
+        <xpath>/ejb-jar/enterprise-beans/message-driven[ejb-name="PositionDownsampling-mdb"]/activation-config/activation-config-property[activation-config-property-name="destinationJNDIName"]/activation-config-property-value</xpath>
+        <operation>replace</operation>
+      </variable-assignment>
+      <variable-assignment>
+        <name>MDB_connection_factory_JNDI</name>
+        <xpath>/ejb-jar/enterprise-beans/message-driven[ejb-name="PositionDownsampling-mdb"]/activation-config/activation-config-property[activation-config-property-name="connectionFactoryJNDIName"]/activation-config-property-value</xpath>
+        <operation>replace</operation>
+      </variable-assignment>
     </module-descriptor>
   </module-override>
   <config-root><%= $emsa_downsampling::wls_dir %>/plan</config-root>

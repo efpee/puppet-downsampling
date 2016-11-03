@@ -65,6 +65,9 @@ class emsa_downsampling (
   $wls_app_servers      = ['imdateAppSrv1', 'imdateAppSrv2'],
   $wls_jms_cluster      = 'imdateJmsCluster',
   $wls_jms_servers      = ['imdateJmsSrv1', 'imdateJmsSrv2', 'imdateJmsSrv3', 'imdateJmsSrv4'],
+  $input_destination_type         = '',
+  $input_connection_factory_jndi  = '',
+  $input_destination_jndi         = '',
   $oinstall_gid         = 115,
   $oracle_gid           = 115,
 ) {
