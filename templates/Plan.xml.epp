@@ -11,15 +11,15 @@
     </variable>
     <variable>
       <name>MDB_destination_type</name>
-      <value><%= $emsa_downsampling::input_destination_type %></value>
+      <value><%= $emsa_downsampling::jms_input_type %></value>
     </variable>
     <variable>
       <name>MDB_destination_JNDI</name>
-      <value><%= $emsa_downsampling::input_destination_jndi %></value>
+      <value><%= $emsa_downsampling::jms_input_destination %></value>
     </variable>
     <variable>
       <name>MDB_connection_factory_JNDI</name>
-      <value><%= $emsa_downsampling::input_connection_factory_jndi %></value>
+      <value><%= $emsa_downsampling::jms_input_connection_factory %></value>
     </variable>
     <variable>
       <name>WorkManager_MDB_workmanager_MaxThreadsConstraintName_14743799504114</name>

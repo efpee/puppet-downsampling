@@ -6,9 +6,15 @@
 #
 # Document parameters here.
 #
-# [*sample_parameter*]
-#   Explanation of what this parameter affects and what it defaults to.
-#   e.g. "Specify one or more upstream ntp servers as an array."
+# [*version*]
+#   Version of downsampling package to be deployed. 
+    This is expected to be part of the package name. 
+    Default: 1.1.3
+#
+# [*previous_version*]
+#   Version of downsampling to be undeployed, if any.
+#
+#
 #
 # === Variables
 #
@@ -24,20 +30,39 @@
 # === Examples
 #
 #  class { 'emsa_downsampling':
-#    servers => [ 'pool.ntp.org', 'ntp.local.company.com' ],
+#    version			      => '1.1.3',
+#    hzl_version 		    => '3.4.2',
+#    hzl_tcp_server_ips	=> ['127.0.0.1'],
+#    hzl_pass				    => 'darkstar-t',
+#    wls_user			  	  => 'weblogic',
+#    wls_pass				    => 'weblogic1',
+#    wls_admin_url	  	=> 't3://localhost:7002',
+#    wls_domain_dir  	  => '/home/vagrant/Oracle/user_domains/imdate/',
+#    wls_app_cluster    => 'ImdAppSrvCluster',
+#    wls_app_servers    => ['IMDAppSrv1', 'IMDAppSrv2'],
+#    wls_jms_cluster    => 'ImdJmsSrvCluster',
+#    wls_jms_servers    => ['IMDJmsSrv1', 'IMDJmsSrv2'],  
+#    jms_input_type                => 'javax.jms.Topic',
+#    jms_input_connection_factory  => 'imdate.ConnectionFactory',
+#    jms_input_destination         => 'imdate.downsampled.topic',
+#    jms_output_type               => 'not used?',
+#    jms_output_connection_factory => 'imdate.ConnectionFactory',
+#    jms_output_destination        => 'imdate.l1.downsampled.topic',
+#    t_ais_default                 => 333,
+#    sat_ais_default               => 66,
 #  }
 #
 # === Authors
 #
-# Author Name <author@domain.com>
+# Frank Premereur <frank.premereur@emsa.europa.eu>
 #
 # === Copyright
 #
-# Copyright 2016 Your name here, unless otherwise noted.
+# Copyright 2016 European Maritime Safety Agency, unless otherwise noted.
 #
 class emsa_downsampling (
-	$version				  = '1.1.2',
-	$previous_version	= '1.1.2',
+	$version				  = '1.1.3',
+	$previous_version	= '',
 	$root_dir				  = '/downsampling',
 	$java_home				= '/usr/bin/java',
 	$hzl_version			= '3.4.2',
@@ -65,9 +90,16 @@ class emsa_downsampling (
   $wls_app_servers      = ['imdateAppSrv1', 'imdateAppSrv2'],
   $wls_jms_cluster      = 'imdateJmsCluster',
   $wls_jms_servers      = ['imdateJmsSrv1', 'imdateJmsSrv2', 'imdateJmsSrv3', 'imdateJmsSrv4'],
-  $input_destination_type         = '',
-  $input_connection_factory_jndi  = '',
-  $input_destination_jndi         = '',
+  $jms_input_type                 = 'javax.jms.Queue',
+  $jms_input_connection_factory   = 'jms.star.DownSampling.ConnectionFactory',
+  $jms_input_destination          = 'jms.star.DownSampling.PositionQueue',
+  $jms_output_type                = 'not used?',
+  $jms_output_connection_factory  = 'jms.star.DownSampling.IMDatEConnectionFactory',
+  $jms_output_destination         = 'jms.star.DownSampling.imdate.OutputQueue',
+  $max_future           = 3600,
+  $cache_eviction       = 7200,
+  $sat_ais_default      = 60,
+  $t_ais_default        = 360,
   $oinstall_gid         = 115,
   $oracle_gid           = 115,
 ) {
@@ -204,47 +236,53 @@ class emsa_downsampling (
 		mode    => '0755',
 	} ->
 
-	file {'wls-dir':
+	file {'downsampling-wls-dir':
 		ensure	=> directory,
 		path	=> "$wls_dir", 
 	} ->
 	
-	file {'app-dir':
+	file {'downsampling-app-dir':
 		ensure	=> directory,
 		path	=> "$wls_dir/app", 
 	} ->
 
-	file {'plan-dir':
+	file {'downsampling-plan-dir':
 		ensure	=> directory,
 		path	=> "$wls_dir/plan",
 	} ->
 
-	file {'overrides-dir':
+	file {'downsampling-overrides-dir':
 		ensure	=> directory,
 		path	=> "$wls_dir/plan/AppFileOverrides",
 	} ->
 
-	exec {"copy-ear":
+	exec {"copy-downsampling-ear":
 		command	=> "cp $artifact_dir/$pkg $wls_dir/app",
 	} ->
 
-	exec {"delete-old-ear":
+	exec {"delete-old-downsampling-ear":
 		command	=> "rm -f $wls_dir/app/$pkg_old",
 	} ->
 
-	file {'plan':
+	file {'downsampling-plan':
 		ensure	=> file,
 		path	=> "$wls_dir/plan/Plan.xml",
 		content	=> epp('emsa_downsampling/Plan.xml.epp'),
 	} ->
 
+	file {"downsampling-config.properties":
+		ensure	=> file,
+		path	=> "$wls_dir/plan/AppFileOverrides/config.properties",
+		content	=> epp('emsa_downsampling/config.properties.epp'),
+	} ->
+	
 	file {'hazelcast-client':
 		ensure	=> file,
 		path	=> "$wls_dir/plan/AppFileOverrides/hazelcast-client.xml",
 		content	=> epp('emsa_downsampling/hazelcast-client.xml.epp'),
 	} ->
 
-	file {'wls-deploy-script':
+	file {'downsampling-wls-deploy-script':
 		ensure	=> file,
 		path	=> "$script_dir/deploy.sh",
 		content	=> epp('emsa_downsampling/deploy.sh.epp'),

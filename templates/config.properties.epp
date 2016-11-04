@@ -1,0 +1,55 @@
+# Down sampling configuration
+# All times are in seconds. Period entries can be given as: 
+# source.provider.client
+# source.provider
+# source
+#
+# They will be used according to the most specific match possible for the 
+# message.
+
+# max time a position will be retained in the the cache. This needs to be:
+# 1. as small as possible (to reduce memory consumption and improve response time
+# 2. greater than any value for the specific sources configured here or at runtime
+positions.cache.eviction = <%= $emsa_downsampling::cache_eviction %>
+
+# Positions with a timestamp further (relative to current system time) in the 
+# future will be rejected. Set to 0 to reject all positions with a timestamp
+# later than current time.
+positions.reject.future = <%= $emsa_downsampling::max_future %>
+
+# source configurations, will be used when no override for a provider is defined
+
+# Sat-AIS source
+Sat-AIS.period = <%= $emsa_downsampling::sat_ais_default %>
+# S-AIS - according to CDF definition this is not allowed as a position source,
+# however this is the value used by the VDM to CDF converter.
+S-AIS.period = <%= $emsa_downsampling::sat_ais_default %>
+
+# T-AIS source
+T-AIS.period = <%= $emsa_downsampling::t_ais_default %>
+
+# Provider configurations overrides the defaults set for the sources
+# Configuration option need to be given as source.provider.property 
+
+# ExactEarth configuration overrides the defaults
+#S-AIS.EE.period = 120
+#T-AIS.EE.period = 300
+
+# KSAT configuration overrides the defaults
+#S-AIS.KSAT.period = 50
+
+# Client specific configurations. 
+# If present they will override configs defined for provider and/or source.
+# For every client a JMS destination needs to be configured. JMS destinations
+# can currently only be provided in this config file, UI will not be able to
+# add or change JMS destinations.
+
+#clients = SSN, IMDATE
+clients = IMDATE
+
+IMDATE.jms.connectionFactory = <%= $emsa_downsampling::jms_output_connection_factory %>
+IMDATE.jms.destination = <%= $emsa_downsampling::jms_output_destination %>
+IMDATE.jms.type = <%= $emsa_downsampling::jms_output_type %> #TODO: not used?
+
+# down sample value for a specific source.provider.client 
+# Sat-AIS.EE.IMDATE.period = 180
