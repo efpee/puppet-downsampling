@@ -8,8 +8,8 @@
 #
 # [*version*]
 #   Version of downsampling package to be deployed. 
-    This is expected to be part of the package name. 
-    Default: 1.1.3
+#   This is expected to be part of the package name. 
+#   Default: 1.1.3
 #
 # [*previous_version*]
 #   Version of downsampling to be undeployed, if any.
