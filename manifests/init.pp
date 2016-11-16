@@ -1,7 +1,18 @@
 # == Class: emsa_downsampling
 #
-# Full description of class emsa_downsampling here.
+# This module installs the EMSA down sampling component to a WebLogic 
+# server/cluster.
+# It will generate a deployment script to create all required JMS resources, 
+# deploy the ear package and install the Hazelcast in memory grid.
 #
+# Before executing the model the following deliverables need to be present on 
+# the VM where down sampling module is being installed:
+# $root_dir/artifacts/position-downsampling-ear-$version.ear
+# $root_dir/artifacts/position-downsampling-model.jar
+#
+# External libraries (commons-lang, hazelcast and jcache) will be downloaded 
+# from the internet, so connections to the internet need to be allowed.
+# 
 # === Parameters
 #
 # Document parameters here.
@@ -27,11 +38,17 @@
 #   Default: 3.4.2
 #
 # [*hzl_cluster*]
-#   Name of the hazelcast cluster.            =
+#   Name of the hazelcast cluster.
 #   Default: star
 #
 # [*hzl_pass*]
-#   Password to be used to access the hazelcast cluster
+#   Password to be used to access the hazelcast cluster.
+#
+# [*hzl_min_heap*]
+#   Minimal heap size for the hazelcast process.
+#
+# [*hzl_max_heap*]
+#   Maximal heap size for the hazelcast process.
 #
 # [*hzl_man_center_enabled*]
 #   Enable the hazelcast management center. This is feature is limited to 
@@ -224,14 +241,16 @@ class emsa_downsampling (
   $hzl_version            = '3.4.2',
   $hzl_cluster            = 'star',
   $hzl_pass               = '',
-  $hzl_man_center_enabled = 'false',
+  $hzl_min_heap           = '',
+  $hzl_max_heap           = '',
+  $hzl_man_center_enabled = false,
   $hzl_man_center_uri     = 'http://localhost:8080/mancenter',
-  $hzl_multicast_enabled  = 'false',
+  $hzl_multicast_enabled  = false,
   $hzl_multicast_group    = '224.2.2.3',
   $hzl_multicast_port     = '54327',
-  $hzl_tcp_enabled        = 'true',
+  $hzl_tcp_enabled        = true,
   $hzl_tcp_server_ips     = [],
-  $hzl_aws_enabled        = 'false',
+  $hzl_aws_enabled        = false,
   $hzl_aws_access_key     = '',
   $hzl_aws_secret_key     = '',
   $hzl_aws_host_header    = 'ec2.amazonaws.com',
@@ -263,6 +282,8 @@ class emsa_downsampling (
 
   $artifact_dir   = "$root_dir/artifacts"
   $script_dir     = "$root_dir/scripts"
+  $bin_dir        = "$root_dir/bin"
+  $lib_dir        = "$root_dir/lib"
   $wls_dir        = "$root_dir/wls"
   $hzl_home       = "$root_dir/hazelcast-$hzl_version"
 
@@ -290,6 +311,7 @@ class emsa_downsampling (
     'RedHat', 'CentOS': {$packages = ['wget']}
     default:            {$packages = ['wget']}
   }
+  
   ensure_packages($packages)
 
   ensure_resource('group', 'oinstall', {
@@ -314,53 +336,58 @@ class emsa_downsampling (
     backup            => true,
   }
 
-  file {"$hzl_home/bin":
+  file {["$bin_dir", "$lib_dir"]:
     ensure  => directory,
   }
 
-  file {"$hzl_home/bin/downsampling-server.sh":
+  file {"$bin_dir/downsampling-server.sh":
     ensure  => file,
     content  => epp('emsa_downsampling/downsampling-server.sh.epp'),
     mode  => '0755',
-    require  => User['oracle'],
   }
 
-  file {"$hzl_home/downsampling-cache.sh":
+  file {"/etc/init.d/downsampling-cache":
     ensure  => file,
-    content  => epp('emsa_downsampling/downsampling-cache.sh.epp'),
-    mode  => '0755',
-    require  => User['oracle'],
+    content => epp('emsa_downsampling/downsampling-cache.sh.epp'),
+    owner   => 'root',
+    group   => 'root',
+    mode    => '0755',
+  }
+
+  service {"downsampling-cache":
+    enable    => true,
+    require   => [ File["/etc/init.d/downsampling-cache"],
+                   File["$bin_dir/downsampling-config.xml"]],
   }
   
-  file {"$hzl_home/bin/downsampling-config.xml":
+  file {"$bin_dir/downsampling-config.xml":
     ensure  => file,
     content  => epp('emsa_downsampling/downsampling-config.xml.epp'),
-    require  => User['oracle'],
   }
 
   exec {'download-commons-lang':
-    command  => "wget $commons_lang_uri -O $hzl_home/lib/commons-lang3-$commons_lang_version.jar",
-    unless  => "test -f $hzl_home/lib/commons-lang3-$commons_lang_version.jar",
+    command  => "wget $commons_lang_uri -O $lib_dir/commons-lang3-$commons_lang_version.jar",
+    unless  => "test -f $lib_dir/commons-lang3-$commons_lang_version.jar",
   }
 
   exec {'download-jcache-api':
-    command  => "wget $jcache_uri -O $hzl_home/lib/cache-api-$jcache_version.jar",
-    unless  => "test -f $hzl_home/lib/cache-api-$jcache_version.jar",
+    command  => "wget $jcache_uri -O $lib_dir/cache-api-$jcache_version.jar",
+    unless  => "test -f $lib_dir/cache-api-$jcache_version.jar",
   }
 
-  exec {'download-model': 
+  exec {'download-ds-model': 
     # Should get the file from a common location, however currently no such 
     # location exists at EMSA
-    command => "mv $artifact_dir/position-downsampling-model.jar $hzl_home/lib/",
-    onlyif  => "test -f $artifact_dir/position-downsampling-model.jar",
+    command => "cp $artifact_dir/position-downsampling-model.jar $lib_dir",
+    unless  => "test -f $lib_dir/position-downsampling-model.jar",
   }
 
-  file {"$script_dir":
-      ensure  => directory,
-    } ->
+  exec {'change-hzl-ownership':
+    command   => "chown -R oracle:imdate $lib_dir",
+  } 
 
-  file {"$script_dir/wlst":
-    ensure  => directory,
+  file {["$script_dir", "$script_dir/wlst"]:
+      ensure  => directory,
   } ->
 
   file {"$script_dir/wlst/connect.py":
@@ -446,7 +473,7 @@ class emsa_downsampling (
     mode    => '0744',
   } ->
 
-  exec {'change-ownership':
+  exec {'change-wls-ownership':
     command  =>  "chown -R oracle:oinstall $wls_dir",
   } 
 

@@ -3,6 +3,11 @@
 PRG="$0"
 PRGDIR=`dirname "$PRG"`
 HAZELCAST_HOME=<%= $emsa_downsampling::hzl_home %>
+CONFIG_FILE=<%= $emsa_downsampling::bin_dir %>/downsampling-config.xml
+
+JCACHE=<%=$emsa_downsampling::lib_dir%>/cache-api-<%= $emsa_downsampling::jcache_version %>.jar
+COMMONS_LANG=<%=$emsa_downsampling::lib_dir%>/commons-lang3-<%= $emsa_downsampling::commons_lang_version %>.jar
+DS_COMMON=<%=$emsa_downsampling::lib_dir%>/position-downsampling-model.jar
 
 if [ $JAVA_HOME ]
 then
@@ -25,11 +30,14 @@ fi
 #### you can enable following variables by uncommenting them
 
 #### minimum heap size
-# MIN_HEAP_SIZE=1G
+<% if $emsa_downsampling::hzl_min_heap != "" { %>
+MIN_HEAP_SIZE=<%= $emsa_downsampling::hzl_min_heap %>
+<% } %>
 
 #### maximum heap size
-MAX_HEAP_SIZE=2G
-
+<% if $emsa_downsampling::hzl_max_heap != "" { %>
+MAX_HEAP_SIZE=<%= $emsa_downsampling::hzl_max_heap %>
+<% } %>
 
 if [ "x$MIN_HEAP_SIZE" != "x" ]; then
 	JAVA_OPTS="$JAVA_OPTS -Xms${MIN_HEAP_SIZE}"
@@ -39,7 +47,7 @@ if [ "x$MAX_HEAP_SIZE" != "x" ]; then
 	JAVA_OPTS="$JAVA_OPTS -Xms${MAX_HEAP_SIZE}"
 fi
 
-export CLASSPATH=$HAZELCAST_HOME/lib/hazelcast-<%= $emsa_downsampling::hzl_version %>.jar:$HAZELCAST_HOME/lib/cache-api-<%= $emsa_downsampling::jcache_version %>.jar:$HAZELCAST_HOME/lib/commons-lang3-<%= $emsa_downsampling::commons_lang_version %>.jar:$HAZELCAST_HOME/lib/position-downsampling-model.jar
+export CLASSPATH=$HAZELCAST_HOME/lib/hazelcast-<%= $emsa_downsampling::hzl_version %>.jar:$JCACHE:$COMMONS_LANG:$DS_COMMON
 
     echo "########################################"
     echo "# RUN_JAVA=$RUN_JAVA"
@@ -47,6 +55,6 @@ export CLASSPATH=$HAZELCAST_HOME/lib/hazelcast-<%= $emsa_downsampling::hzl_versi
     echo "# starting now...."
     echo "########################################"
 
-$RUN_JAVA -server $JAVA_OPTS -Dhazelcast.config=$HAZELCAST_HOME/bin/downsampling-config.xml com.hazelcast.core.server.StartServer
+$RUN_JAVA -server $JAVA_OPTS -Dhazelcast.config=$CONFIG_FILE com.hazelcast.core.server.StartServer
 
 

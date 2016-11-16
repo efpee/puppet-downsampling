@@ -39,16 +39,21 @@
             <ports>0</ports>
         </outbound-ports>
         <join>
-            <multicast enabled="<%= $emsa_downsampling::hzl_multicast_enabled %>">
+            <% if $emsa_downsampling::hzl_multicast_enabled { %>
+              <multicast enabled="<%= $emsa_downsampling::hzl_multicast_enabled %>">
                 <multicast-group><%= $emsa_downsampling::hzl_multicast_group %></multicast-group>
                 <multicast-port><%= $emsa_downsampling::hzl_multicast_port %></multicast-port>
-            </multicast>
-            <tcp-ip enabled="<%= $emsa_downsampling::hzl_tcp_enabled %>">
-				<% $emsa_downsampling::hzl_tcp_server_ips.each |$server| { -%>
-					<interface><%= $server %></interface>
-				<% } -%>
-            </tcp-ip>
-            <aws enabled="<%= $emsa_downsampling::hzl_aws_enabled %>">
+              </multicast>
+            <% } -%>            
+            <% if $emsa_downsampling::hzl_tcp_enabled { %>
+              <tcp-ip enabled="<%= $emsa_downsampling::hzl_tcp_enabled %>">
+                <% $emsa_downsampling::hzl_tcp_server_ips.each |$server| { -%>
+                  <interface><%= $server %></interface>
+               <% } -%>
+             </tcp-ip>
+            <% } -%>            
+            <% if $emsa_downsampling::hzl_aws_enabled { %>
+              <aws enabled="<%= $emsa_downsampling::hzl_aws_enabled %>">
                 <access-key><%= $emsa_downsampling::hzl_aws_access_key %></access-key>
                 <secret-key><%= $emsa_downsampling::hzl_aws_secret_key %></secret-key>
                 <!--optional, default is us-east-1 -->
@@ -59,7 +64,8 @@
                 <security-group-name>hazelcast-sg</security-group-name>
                 <tag-key>type</tag-key>
                 <tag-value>hz-nodes</tag-value>
-            </aws>
+              </aws>
+            <% } -%>
         </join>
         <interfaces enabled="false">
             <interface>10.10.1.*</interface>
@@ -134,18 +140,18 @@
         -->
         <async-backup-count>0</async-backup-count>
         <!--
-			Maximum number of seconds for each entry to stay in the map. Entries that are
-			older than <time-to-live-seconds> and not updated for <time-to-live-seconds>
-			will get automatically evicted from the map.
-			Any integer between 0 and Integer.MAX_VALUE. 0 means infinite. Default is 0.
-		-->
+      Maximum number of seconds for each entry to stay in the map. Entries that are
+      older than <time-to-live-seconds> and not updated for <time-to-live-seconds>
+      will get automatically evicted from the map.
+      Any integer between 0 and Integer.MAX_VALUE. 0 means infinite. Default is 0.
+    -->
         <time-to-live-seconds>0</time-to-live-seconds>
         <!--
-			Maximum number of seconds for each entry to stay idle in the map. Entries that are
-			idle(not touched) for more than <max-idle-seconds> will get
-			automatically evicted from the map. Entry is touched if get, put or containsKey is called.
-			Any integer between 0 and Integer.MAX_VALUE. 0 means infinite. Default is 0.
-		-->
+      Maximum number of seconds for each entry to stay idle in the map. Entries that are
+      idle(not touched) for more than <max-idle-seconds> will get
+      automatically evicted from the map. Entry is touched if get, put or containsKey is called.
+      Any integer between 0 and Integer.MAX_VALUE. 0 means infinite. Default is 0.
+    -->
         <max-idle-seconds>0</max-idle-seconds>
         <!--
             Valid values are:
