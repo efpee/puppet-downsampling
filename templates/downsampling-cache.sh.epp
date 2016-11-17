@@ -1,87 +1,114 @@
 #!/bin/sh
-#
-# /etc/init.d/downsampling-cache
-# This script start the hazelcast in-memory cache
-# Author: Frank Premereur
-#
-# chkconfig: 2345 95 05
+# ------------------------------------------------------------------------------
+# description: Hazelcast in-memory cache start, stop and status.
+# chkconfig: 35 90 91
+# version: 1.0
+# history: Nov 2016: based on existing, F. Premereur and V. Cleto
+# ------------------------------------------------------------------------------
+# Start before Weblogic Nodemanager, stops after.
+# ------------------------------------------------------------------------------
 
-# Source function library
-#. /etc/init.d/functions
+# Next are standards and should not be changed
+SCRIPT_NAME=downsampling-cache  # fixed to script name ito avoid init.d name changes
+LOG_FILE=/var/log/${SCRIPT_NAME}
 
-export JAVA_HOME=<%= $emsa_downsampling::java_home %>
-SERVICE_PID=`ps aux | grep downsampling-server.sh | grep -v grep | awk '{print $2}'`
-SERVICE_PID_HAZEL=`ps aux | grep 'java -server .* -Dhazelcast' | grep -v grep | awk '{print $2}'`
+# This script variables
+APP_USER=oracle
+APP_HOME=<%= $emsa_downsampling::root_dir %> # binary is then bin/downsampling-server.sh
+JAVA_HOME=<%= $emsa_downsampling::java_home %> # used by app
 
-start() {
-	if [ -z "$SERVICE_PID_HAZEL" ] 
-	then
-		echo "Starting <Hazelcast>: "
-		su - oracle -c "<%= $emsa_downsampling::bin_dir %>/downsampling-server.sh > <%= $emsa_downsampling::bin_dir %>/hazelcast.out 2>&1 &"
-		echo "done"
-	else
-		echo "Hazelcast is already running"
-	fi
-}	
+# Display (log)
+# Parameters: message
+log_format() {
+ MESSAGE="$*"
+ echo -e "$MESSAGE"
+ # can only write under /var/log if UID=0
+ [ $(id -u) -eq 0 ] && \
+  echo -e "$(date '+%b %e %T') - $SCRIPT_NAME: $MESSAGE" >>$LOG_FILE
+}
 
-stop() {
-	if [ -z "$SERVICE_PID" ]
-	then
-		echo "Hazelcast service not running"		
-	else
-  	echo "Shutting down <Hazelcast - pid $SERVICE_PID> service"
-		kill -9 $SERVICE_PID
-	fi
-	if [ -z "$SERVICE_PID_HAZEL" ]
-	then 
-		echo "Hazelcast server not running"
-	else
-		echo "Shutting down <Hazelcast - pid $SERVICE_PID_HAZEL> server"
-		kill -9 $SERVICE_PID_HAZEL
-	fi
+usage() {
+ cat <<EOF
+Hazelcast in-memory cache start, stop and status script.
+Usage: $SCRIPT_NAME {start|stop|restart|status}
+
+APP_HOME=$APP_HOME
+EOF
 }
 
 status() {
-	if [ -z "$SERVICE_PID" ] 
-	then
-		echo "Hazelcast service is not running"
-	else
-		echo "Hazelcast service (pid $SERVICE_PID) is running"
-	fi
-	if [ -z "$SERVICE_PID_HAZEL" ] 
-	then
-		echo "Hazelcast server is not running"
-	else
-		echo "Hazelcast server (pid $SERVICE_PID_HAZEL) is running"
-	fi
+ RUN_PID=$(ps -fu $APP_USER|grep -v grep|grep "java -server .* -Dhazelcast"| \
+  awk '{print $2}')
+ [ -z $RUN_PID ] && RUN_PID=0
+ echo $RUN_PID
 }
 
+# Start Hazelcast
+# Returns: 0 if started, 1 if not
+start() {
+ RUN_PID=$(status)
+ if [ $RUN_PID -gt 0 ]; then
+  log_format "Hazelcast in-memory cache is already running with PID=$RUN_PID"
+ else
+  if [ "$(id -un)" != "$APP_USER" ]; then
+   su - $APP_USER -c "export JAVA_HOME=$JAVA_HOME; \
+   $APP_HOME/bin/downsampling-server.sh >$APP_HOME/hazelcast.out 2>&1 &"
+  else
+   bash -c "export JAVA_HOME=$JAVA_HOME; \
+   $APP_HOME/bin/downsampling-server.sh >$APP_HOME/hazelcast.out 2>&1 &"
+  fi
+  sleep 3 # wait for script start
+  RUN_PID=$(status)
+  if [ $RUN_PID -eq 0 ]; then
+   log_format "ERROR: Hazelcast in-memory cache is not running"
+   return 1
+  else
+   log_format "Hazelcast in-memory cache is running with PID=$RUN_PID"
+   [ "$(id -un)" != "$APP_USER" ] && touch /var/lock/subsys/${SCRIPT_NAME}
+  fi
+ fi
+ return 0
+}
+
+# Stop Hazelcast (always works)
+stop() {
+ RUN_PID=$(status)
+ if [ $RUN_PID -gt 0 ]; then
+  kill -9 $RUN_PID # hard kill
+  log_format "Hazelcast in-memory cache is stopped"
+ else
+  log_format "Hazelcast in-memory cache is already stopped"
+ fi
+ [ "$(id -un)" != "$APP_USER" ] && rm -f /var/lock/subsys/${SCRIPT_NAME}
+ return 0
+}
+
+# MAIN
+[ "$(id -un)" != "$APP_USER" -a $(id -u) -gt 0 ] && \
+ echo "You must be user \"root\" or \"$APP_USER\" to run this script." && exit 1
+# See how we were called.
+RETVAL=0
 case "$1" in
-    start)
-	start
-	;;
-    stop)
-	stop
-	;;
-    status)
-	status
-	;;
-    restart)
-    	stop
-	sleep 3
-	start
-	;;
-    reload)
-	restart
-	;;
-    condrestart)
-	[ -f /var/lock/subsys/jcache ] && restart || :
-	;;
-    *)
-	echo $"Usage: $0 {start|stop|status|reload|restart}"
-	exit 1
-	;;
+ start)
+  start; RETVAL=$?
+  ;;
+ stop)
+  stop # always stops
+  ;;
+ restart)
+  stop; start; RETVAL=$?
+  ;;
+ status)
+  RUN_PID=$(status)
+  if [ $RUN_PID -gt 0 ]; then
+   echo "Hazelcast in-memory cache is running with PID=$RUN_PID"
+  else
+   echo "Hazelcast in-memory cache is not running"
+   RETVAL=1
+  fi
+  ;;
+ *)
+  usage
+  ;;
 esac
-
-exit $?
-
+exit $RETVAL
