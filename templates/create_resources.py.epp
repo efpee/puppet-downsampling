@@ -2,11 +2,8 @@ print 'Start WebLogic deployment ....'
 
 DOMAIN_DIR = '<%= $emsa_downsampling::wls_domain_dir %>'
 
-APP_CLUSTER = '<%= $emsa_downsampling::wls_application_cluster %>'
-APP_MANAGED_SERVERS = [<%= $emsa_downsampling::wls_app_servers.map |$s| {"\'$s\'"}.join(',') %>]
-
-JMS_CLUSTER = '<%= $emsa_downsampling::wls_jms_cluster %>'
-JMS_MANAGED_SERVERS = [<%= $emsa_downsampling::wls_jms_servers.map |$s| {"\'$s\'"}.join(',') %>]
+JMS_CLUSTER = '<%= $emsa_downsampling::wls_cluster %>'
+JMS_MANAGED_SERVERS = [<%= $emsa_downsampling::wls_servers.map |$s| {"\'$s\'"}.join(',') %>]
 
 try:
   execfile('connect.py')

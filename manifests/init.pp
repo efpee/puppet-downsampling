@@ -31,7 +31,7 @@
 #
 # [*java_home*]
 #   Location of the java executable.
-#   Default: /usr/bin/java
+#   Default: /usr/lib/jvm/java-8-openjdk-amd64/jre
 # 
 # [*hzl_version*]
 #   Version of hazelcast in memory store to be installed.
@@ -237,7 +237,7 @@ class emsa_downsampling (
   $version                = '1.1.3',
   $previous_version       = '',
   $root_dir               = '/downsampling',
-  $java_home              = '/usr/bin/java',
+  $java_home              = '/usr/lib/jvm/java-8-openjdk-amd64/jre',
   $hzl_version            = '3.4.2',
   $hzl_cluster            = 'star',
   $hzl_pass               = '',
@@ -261,23 +261,22 @@ class emsa_downsampling (
   $wls_pass               = '',
   $wls_admin_url          = '',
   $wls_domain_dir         = '/wl_domains/imdate/',
-  $wls_app_cluster        = 'imdateAppCluster',
-  $wls_app_servers        = ['imdateAppSrv1', 'imdateAppSrv2'],
-  $wls_jms_cluster        = 'imdateJmsCluster',
-  $wls_jms_servers        = ['imdateJmsSrv1', 'imdateJmsSrv2', 'imdateJmsSrv3', 'imdateJmsSrv4'],
+  $wls_cluster        = 'imdateJmsCluster',
+  $wls_servers        = ['imdateJmsSrv1', 'imdateJmsSrv2', 'imdateJmsSrv3', 'imdateJmsSrv4'],
   $deploy_on_wls          = false,
   $jms_input_type                 = 'javax.jms.Queue',
   $jms_input_connection_factory   = 'jms.star.DownSampling.ConnectionFactory',
   $jms_input_destination          = 'jms.star.DownSampling.PositionQueue',
-  $jms_output_type                = 'not used?',
   $jms_output_connection_factory  = 'jms.star.DownSampling.IMDatEConnectionFactory',
   $jms_output_destination         = 'jms.star.DownSampling.imdate.OutputQueue',
   $max_future             = 3600,
   $cache_eviction         = 7200,
   $sat_ais_default        = 60,
   $t_ais_default          = 360,
-  $oinstall_gid           = 115,
-  $oracle_gid             = 115,
+  $owner                  = oracle,
+  $owner_gid              = 115,
+  $group                  = oinstall,
+  $group_gid              = 115,
 ) {
 
   $artifact_dir   = "$root_dir/artifacts"
@@ -295,14 +294,9 @@ class emsa_downsampling (
 
   $app_name       = "postion_downsampling-$version"
   $app_old_name   = "postion_downsampling-$previous_version"
-
-
   
-  class {'hazelcast':
-    version => $hzl_version,  
-    home  => $root_dir,
-  }
-
+  include emsa_downsampling::hazelcast_config
+  
   Exec { path   =>
     ['/bin/', '/sbin/', '/usr/bin/', '/usr/sbin/']
   }
@@ -314,172 +308,105 @@ class emsa_downsampling (
   
   ensure_packages($packages)
 
-  ensure_resource('group', 'oinstall', {
+  ensure_resource('group', "$group", {
       ensure => 'present', 
-      gid    => "$oracle_gid",
+      gid    => "$group_gid",
     }
   )
  
-  ensure_resource('user', 'oracle', {
+  ensure_resource('user', "$owner", {
     'ensure'          => present,
     'managehome'      => true,
-    'groups'          => 'oinstall',
+    'groups'          => "$group",
     'require'         => Group['oinstall'],
-    'gid'             => "$oinstall_gid",
+    'gid'             => "$owner_gid",
   })
       
   File {
     ensure            => 'present',
-    owner             => 'oracle',
-    group             => 'imdate',
+    owner             => $owner,
+    group             => $group,
     mode              => '0644',
     backup            => true,
   }
 
-  file {["$bin_dir", "$lib_dir"]:
-    ensure  => directory,
-  }
-
-  file {"$bin_dir/downsampling-server.sh":
-    ensure  => file,
-    content  => epp('emsa_downsampling/downsampling-server.sh.epp'),
-    mode  => '0755',
-  }
-
-  file {"/etc/init.d/downsampling-cache":
-    ensure  => file,
-    content => epp('emsa_downsampling/downsampling-cache.sh.epp'),
-    owner   => 'root',
-    group   => 'root',
-    mode    => '0755',
-  }
-
-  service {"downsampling-cache":
-    enable    => true,
-    require   => [ File["/etc/init.d/downsampling-cache"],
-                   File["$bin_dir/downsampling-config.xml"]],
-  }
-  
-  file {"$bin_dir/downsampling-config.xml":
-    ensure  => file,
-    content  => epp('emsa_downsampling/downsampling-config.xml.epp'),
-  }
-
-  exec {'download-commons-lang':
-    command  => "wget $commons_lang_uri -O $lib_dir/commons-lang3-$commons_lang_version.jar",
-    unless  => "test -f $lib_dir/commons-lang3-$commons_lang_version.jar",
-  }
-
-  exec {'download-jcache-api':
-    command  => "wget $jcache_uri -O $lib_dir/cache-api-$jcache_version.jar",
-    unless  => "test -f $lib_dir/cache-api-$jcache_version.jar",
-  }
-
-  exec {'download-ds-model': 
-    # Should get the file from a common location, however currently no such 
-    # location exists at EMSA
-    command => "cp $artifact_dir/position-downsampling-model.jar $lib_dir",
-    unless  => "test -f $lib_dir/position-downsampling-model.jar",
-  }
-
-  exec {'change-hzl-ownership':
-    command   => "chown -R oracle:imdate $lib_dir",
-  } 
-
   file {["$script_dir", "$script_dir/wlst"]:
       ensure  => directory,
-  } ->
+  } 
 
   file {"$script_dir/wlst/connect.py":
     ensure  => file,
     content  => epp('emsa_downsampling/connect.py.epp'),
     mode    => '0700',
-  } ->
+  } 
 
   exec {'ds_fetch_jms_functions':
-    command  => "wget https://raw.githubusercontent.com/efpee/wlst/1.0.2/jms_functions.py -O $script_dir/wlst/jms_functions.py",
+    command  => "wget --no-check-certificate https://raw.githubusercontent.com/efpee/wlst/1.0.2/jms_functions.py -O $script_dir/wlst/jms_functions.py",
     unless  => "test -f $script_dir/wlst/jms_functions.py",
-    require  => Package['wget'],
-  } ->
+    require  => [Package['wget'],
+                 File["$script_dir/wlst"]],
+  } 
   
   file {"$script_dir/wlst/create_jms_resources.py":
     ensure  => file,
-    content  => epp('emsa_downsampling/create_jms_resources.py.epp'),
+    content => epp('emsa_downsampling/create_jms_resources.py.epp'),
     mode    => '0755',
-  } ->
+  } 
   
   file {"$script_dir/wlst/deploy_downsampling.py":
     ensure  => file,
-    content  => epp('emsa_downsampling/deploy_downsampling.py.epp'),
+    content => epp('emsa_downsampling/deploy_downsampling.py.epp'),
     mode    => '0755',
-  } -> 
+  } 
 
   file {"$script_dir/wlst/create_resources.py":
     ensure  => file,
-    content  => epp('emsa_downsampling/create_resources.py.epp'),
+    content => epp('emsa_downsampling/create_resources.py.epp'),
     mode    => '0755',
-  } ->
+  } 
 
-  file {'downsampling-wls-dir':
+  file {["$wls_dir", "$wls_dir/app", "$wls_dir/plan", "$wls_dir/plan/AppFileOverrides"]:
     ensure  => directory,
-    path  => "$wls_dir", 
-  } ->
+  } 
   
-  file {'downsampling-app-dir':
-    ensure  => directory,
-    path  => "$wls_dir/app", 
-  } ->
-
-  file {'downsampling-plan-dir':
-    ensure  => directory,
-    path  => "$wls_dir/plan",
-  } ->
-
-  file {'downsampling-overrides-dir':
-    ensure  => directory,
-    path  => "$wls_dir/plan/AppFileOverrides",
-  } ->
-
   exec {"copy-downsampling-ear":
     command  => "cp $artifact_dir/$pkg $wls_dir/app",
-  } ->
-
-  exec {"delete-old-downsampling-ear":
-    command  => "rm -f $wls_dir/app/$pkg_old",
-  } ->
+    require  => File["$wls_dir/app"],
+  } 
 
   file {'downsampling-plan':
     ensure  => file,
     path  => "$wls_dir/plan/Plan.xml",
     content  => epp('emsa_downsampling/Plan.xml.epp'),
-  } ->
+  } 
 
   file {"downsampling-config.properties":
     ensure  => file,
-    path  => "$wls_dir/plan/AppFileOverrides/config.properties",
-    content  => epp('emsa_downsampling/config.properties.epp'),
-  } ->
+    path    => "$wls_dir/plan/AppFileOverrides/config.properties",
+    content => epp('emsa_downsampling/config.properties.epp'),
+  } 
   
   file {'hazelcast-client':
     ensure  => file,
-    path  => "$wls_dir/plan/AppFileOverrides/hazelcast-client.xml",
-    content  => epp('emsa_downsampling/hazelcast-client.xml.epp'),
-  } ->
+    path    => "$wls_dir/plan/AppFileOverrides/hazelcast-client.xml",
+    content => epp('emsa_downsampling/hazelcast-client.xml.epp'),
+  } 
 
   file {'downsampling-wls-deploy-script':
     ensure  => file,
-    path  => "$script_dir/deploy.sh",
-    content  => epp('emsa_downsampling/deploy.sh.epp'),
+    path    => "$script_dir/deploy.sh",
+    content => epp('emsa_downsampling/deploy.sh.epp'),
     mode    => '0744',
-  } ->
+  } 
 
   exec {'change-wls-ownership':
-    command  =>  "chown -R oracle:oinstall $wls_dir",
+    command  => "chown -R $owner:$group $wls_dir",
   } 
 
   if $deploy_on_wls == true {
     exec {'deploy-in-wls':
-      command  =>  "$script_dir/deploy.sh",
+      command   => "$script_dir/deploy.sh",
+      require   => File["downsampling-wls-deploy-script"],
     }
   }
 }
