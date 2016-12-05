@@ -4,7 +4,14 @@ class emsa_downsampling::hazelcast_config {
     version => $emsa_downsampling::hzl_version,  
     home  => $emsa_downsampling::root_dir,
   }
-
+      
+  File {
+    ensure            => 'present',
+    owner             => $emsa_downsampling::owner,
+    group             => $emsa_downsampling::group,
+    mode              => '0644',
+    backup            => true,
+  }
 
   file {["$emsa_downsampling::bin_dir", "$emsa_downsampling::lib_dir"]:
     ensure  => directory,
@@ -59,7 +66,7 @@ class emsa_downsampling::hazelcast_config {
   }
 
   exec {'change-lib-ownership':
-    command   => "chown -R $owner:$group $emsa_downsampling::lib_dir",
+    command   => "chown -R $emsa_downsampling::owner:$emsa_downsampling::group $emsa_downsampling::lib_dir",
     require => [File["$emsa_downsampling::lib_dir"],
                 Exec['download-commons-lang'],
                 Exec['download-jcache-api'],

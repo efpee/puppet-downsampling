@@ -186,12 +186,21 @@
 #   Default down sampling window for T-AIS messages.
 #   Default: 360
 #
-# [*oinstall_gid*]
-#   GID to be used when/if creating the oinstall group.
+# [*group*]
+#   The OS group that will be the owner of the files.
+#   Default: oinstall
+#
+# [*group_gid*]
+#   GID to be used when/if creating the group that will own the files. If the 
+#   group already exists, the GID wll be changed to this value.
 #   Default: 115
 #
-# [*oracle_gid*]
-#   GID to be used when/if creating the oracle user.
+# [*owner*]
+#   The OS user that will be the owner of the files.
+#
+# [*owner_gid*]
+#   GID to be used when/if creating the group that will own the files. If the 
+#   user already exists, the GID wll be changed to this value.
 #   Default: 115
 #
 #
@@ -261,8 +270,8 @@ class emsa_downsampling (
   $wls_pass               = '',
   $wls_admin_url          = '',
   $wls_domain_dir         = '/wl_domains/imdate/',
-  $wls_cluster        = 'imdateJmsCluster',
-  $wls_servers        = ['imdateJmsSrv1', 'imdateJmsSrv2', 'imdateJmsSrv3', 'imdateJmsSrv4'],
+  $wls_cluster            = 'imdateJmsCluster',
+  $wls_servers            = ['imdateJmsSrv1', 'imdateJmsSrv2', 'imdateJmsSrv3', 'imdateJmsSrv4'],
   $deploy_on_wls          = false,
   $jms_input_type                 = 'javax.jms.Queue',
   $jms_input_connection_factory   = 'jms.star.DownSampling.ConnectionFactory',
@@ -273,9 +282,9 @@ class emsa_downsampling (
   $cache_eviction         = 7200,
   $sat_ais_default        = 60,
   $t_ais_default          = 360,
-  $owner                  = oracle,
+  $owner                  = 'oracle',
   $owner_gid              = 115,
-  $group                  = oinstall,
+  $group                  = 'oinstall',
   $group_gid              = 115,
 ) {
 
@@ -318,14 +327,14 @@ class emsa_downsampling (
     'ensure'          => present,
     'managehome'      => true,
     'groups'          => "$group",
-    'require'         => Group['oinstall'],
+    'require'         => Group["$group"],
     'gid'             => "$owner_gid",
   })
       
   File {
     ensure            => 'present',
-    owner             => $owner,
-    group             => $group,
+    owner             => "$owner",
+    group             => "$group",
     mode              => '0644',
     backup            => true,
   }
